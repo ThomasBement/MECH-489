@@ -82,9 +82,6 @@ def fit_dat(time, temp, time_max):
     y_fit = t_cool(x_fit, *popt)
     return [x_fit, y_fit, popt]
 
-def h_conv(heat_flux, temp_surf, temp_jet):
-    return np.abs(heat_flux/(temp_jet-temp_surf))
-
 def q_heater(power_heater): # power [W]
     area = 0.048258 # m^2
     return power_heater/area
@@ -93,6 +90,9 @@ def q_rad(temp_surf):
     emissivity = 0.16
     sigma = 5.670e-8 # [W/m^2/K^4] Stefan-Boltzmann const
     return emissivity*sigma*temp_surf**4
+
+def h_conv(q_measured, power_heater, temp_surf, temp_jet):
+    return np.abs((q_heater(power_heater)-q_measured-q_rad(temp_surf)) / (temp_jet-temp_surf))
 
 def nuss(h, d, k):
     return h*d/k
@@ -120,6 +120,7 @@ def part_a(data, name):
     time = data['Time [s]']
     flux = data['Heat Flux [W/m^2]'][-1]
     TJ = data['T_Jet [C]'][-1]
+    PH = data['P_heater [W]'][-1]
     kin_visc = np.interp(TJ, VISC_MAP['Temperature [C]'], VISC_MAP['Kinematic Viscosity [m2/s *10-6]'])*(1E-6)
     Q = flow(float(name.split('.')[0].split('_')[0].split('Q')[-1]))*(1E-6)*(1/60)
     HD = float(name.split('HR')[-1].split('.')[0].replace('d', '.'))
@@ -138,7 +139,7 @@ def part_a(data, name):
             for i in range(len(TC_MAP['Channel'])):
                 if (key == TC_MAP['Channel'][i]):
                     RD.append(TC_MAP['R/D'][i])
-                    HCONV.append(h_conv(flux, temp_fit[-1], TJ))
+                    HCONV.append(h_conv(flux, PH, temp_fit[-1], TJ))
                     NU.append(nuss(HCONV[-1], ID, np.interp(TS[-1], TC_303['Temperature [C]'], TC_303['Thermal Conductivity [W/m-K]'])))
                     break
     plt.title('Local Nu vs. Radial Position for Re: %.0f and H/D: %.1s' %(RE, HD))
