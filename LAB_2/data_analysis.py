@@ -85,6 +85,15 @@ def fit_dat(time, temp, time_max):
 def h_conv(heat_flux, temp_surf, temp_jet):
     return np.abs(heat_flux/(temp_jet-temp_surf))
 
+def q_heater(power_heater): # power [W]
+    area = 0.048258 # m^2
+    return power_heater/area
+
+def q_rad(temp_surf):
+    emissivity = 0.16
+    sigma = 5.670e-8 # [W/m^2/K^4] Stefan-Boltzmann const
+    return emissivity*sigma*temp_surf**4
+
 def nuss(h, d, k):
     return h*d/k
 
