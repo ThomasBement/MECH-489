@@ -51,13 +51,21 @@ def get_file(search_path):
     file_lis = [files[i] for i in idx_lis]
     return file_lis 
 
-def read_data(file_paths, data_path, delim=','):
+def read_data(file_paths, data_path, delim=',', single=True):
     ans = {}
-    for file_path in file_paths:
-        read_path = '%s/%s' %(data_path, file_path)
-        data = pd.read_csv(read_path)
-        for header in data:
-            ans[header] = np.array(data[header])
+    if single:
+        for file_path in file_paths:
+            read_path = '%s/%s' %(data_path, file_path)
+            data = pd.read_csv(read_path)
+            for header in data:
+                ans[header] = np.array(data[header])
+    else:
+        for file_path in file_paths:
+            ans[file_path] = {}
+            read_path = '%s/%s' %(data_path, file_path)
+            data = pd.read_csv(read_path)
+            for header in data:
+                ans[file_path][header] = np.array(data[header])
     return ans
 
 def t_cool(t, a, b, c, d):
@@ -75,7 +83,7 @@ def fit_dat(time, temp, time_max):
     return [x_fit, y_fit, popt]
 
 def h_conv(heat_flux, temp_surf, temp_jet):
-    return np.abs(heat_flux/temp_jet-temp_surf)
+    return np.abs(heat_flux/(temp_jet-temp_surf))
 
 def nuss(h, d, k):
     return h*d/k
@@ -85,6 +93,15 @@ def reynolds(Q, d, v):
 
 def flow(x, a=-2.27E-6, b=8.695E-4, c=-0.11726, d=7.4009, e=189.6027):
     return a*x**5 +b*x**4 + c*x**3 + d*x**2 + e*x
+
+def mart_AR(d, r):
+    return (d**2)/(4*r**2)
+
+def mart_G(HD, AR):
+    return 2*np.sqrt(AR)*((1-2.2*np.sqrt(AR))/(1+0.2*(HD-6)*np.sqrt(AR)))
+
+def mart_NU(G, RE):
+    return G*(2*np.sqrt(RE)*np.sqrt(1+0.005*RE**0.55))
 
 def part_a(data, name):
     TC_MAP = read_data(['TC_MAP.csv'], './DATA/OTHER')
@@ -122,10 +139,24 @@ def part_a(data, name):
     plt.savefig('%s/%s.png' %(image_path, name.split('.')[0]), format='png', bbox_inches='tight')
     plt.show()
 
+def part_f():
+    RE = [12000, 20000]
+    HD = [2.5, 10]
+    read_files = get_file(data_path)
+    data = read_data(read_files, data_path, single=False)
+    for key in data:
+        print(key)
+
+
 """
 MAIN
 """
 read_files = get_file(data_path)
 data = read_data(read_files, data_path)
 
+print('PART A:\n\n')
 part_a(data, read_files[0])
+
+quit()
+print('PART F:\n\n')
+part_f()
